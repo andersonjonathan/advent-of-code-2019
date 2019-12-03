@@ -1,5 +1,3 @@
-
-
 def convert_string_to_path(data):
     return data.split(',')
 
@@ -78,7 +76,6 @@ def main():
         print(intersections)
         print(get_manhattan_distance(intersections[0]))
         print(intersections[0][2])
-
 
 
 if __name__ == '__main__':
