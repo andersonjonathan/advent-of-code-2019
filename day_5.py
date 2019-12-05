@@ -43,15 +43,15 @@ def computer(program):
                 counter += 3
         elif opcode == 7:
             if read_value(parameter_mode[-1], counter + 1) < read_value(parameter_mode[-2], counter + 2):
-                program[program[counter + 1]] = 1
+                program[program[counter + 3]] = 1
             else:
-                program[program[counter + 1]] = 0
+                program[program[counter + 3]] = 0
             counter += 4
         elif opcode == 8:
             if read_value(parameter_mode[-1], counter + 1) == read_value(parameter_mode[-2], counter + 2):
-                program[program[counter + 1]] = 1
+                program[program[counter + 3]] = 1
             else:
-                program[program[counter + 1]] = 0
+                program[program[counter + 3]] = 0
             counter += 4
 
         elif opcode == 99:
