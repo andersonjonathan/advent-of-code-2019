@@ -1,7 +1,12 @@
 import itertools
 
 
-def computer(program, input_data=None, output_data=None, debug=False):
+# Signals:
+# 0: Exited
+# 1: Waiting for input returns program and counter
+
+
+def computer(program, input_data=None, output_data=None, counter=0, debug=False):
     """The computer."""
 
     def read(mode, position):
@@ -10,7 +15,6 @@ def computer(program, input_data=None, output_data=None, debug=False):
         elif mode == 1:
             return program[position]
 
-    counter = 0
     while counter < len(program):
         if debug:
             print(counter, program, end=' ')
@@ -41,6 +45,8 @@ def computer(program, input_data=None, output_data=None, debug=False):
             counter += 4
         elif opcode == 3:  # Input - 3,50 would take an input value and store it at address 50.
             if input_data is not None:
+                if len(input_data) == 0:
+                    return 1, program, counter
                 if param_mode[-1] == 0:
                     program[program[counter + 1]] = input_data.pop(0)
                 elif param_mode[-1] == 1:
@@ -81,7 +87,7 @@ def computer(program, input_data=None, output_data=None, debug=False):
             counter += 4
 
         elif opcode == 99:  # Exit
-            break
+            return 0,
         else:
             raise RuntimeError('Unknown operation', opcode)
         if debug:
@@ -97,16 +103,32 @@ def main():
         memory = [int(x) for x in input_file.readline().strip().split(',')]
         #           0  1   2  3   4     5   6   7   8  9   10  11  12 13  14  15 16
         # memory = [3, 15, 3, 16, 1002, 16, 10, 16, 1, 16, 15, 15, 4, 15, 99, 0, 0]
-        # memory = [3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0]
+        # memory = [3, 26, 1001, 26, -4, 26, 3, 27, 1002, 27, 2, 27, 1, 27, 26, 27, 4, 27, 1001, 28, -1, 28, 1005, 28, 6,
+        #           99, 0, 0, 5]
         result = []
-        for busses in itertools.permutations([4, 3, 2, 1, 0]):
+        for busses in itertools.permutations([5, 6, 7, 8, 9]):
             previous_output = 0
-            for r in busses:
-                input_data = [r, previous_output]
-                output_data = []
-                computer(memory.copy(), input_data, output_data)
-                previous_output = output_data[0]
-            result.append((previous_output, busses))
+            has_exited = False
+            persistent_memory = {}
+            while not has_exited:
+                for r in busses:
+                    output_data = []
+                    if r in persistent_memory:
+                        program_memory, counter = persistent_memory[r]
+                        out = computer(program_memory,
+                                       input_data=[previous_output],
+                                       output_data=output_data,
+                                       counter=counter)
+                    else:
+                        out = computer(memory.copy(), input_data=[r, previous_output], output_data=output_data)
+
+                    if out[0] == 0:
+                        has_exited = True
+                    elif out[0] == 1:
+                        persistent_memory[r] = (out[1], out[2])
+
+                    previous_output = output_data[0]
+                result.append((previous_output, busses))
         result = sorted(result, key=lambda r: r[0], reverse=True)
         print(result[0])
 
