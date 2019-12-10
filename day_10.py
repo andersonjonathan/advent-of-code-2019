@@ -1,4 +1,5 @@
 from functools import reduce
+from math import atan2, pi, sqrt
 from operator import mul
 
 
@@ -35,7 +36,9 @@ def main():
                     continue
                 offseted_astroid = [asteroid[0] - current_asteroid[0], asteroid[1] - current_asteroid[1]]
                 x_factors = factors(offseted_astroid[0])
+                assert reduce(mul, x_factors) == offseted_astroid[0]
                 y_factors = factors(offseted_astroid[1])
+                assert reduce(mul, y_factors) == offseted_astroid[1]
                 common_factors = []
                 i = 0
                 while True:
@@ -50,12 +53,38 @@ def main():
                     multiplier = reduce(mul, common_factors)
                 else:
                     multiplier = 1
-                offseted_astroids.append(offseted_astroids)
-                factorised_asteroid_positions.append(
-                    (offseted_astroid[0]/abs(multiplier), offseted_astroid[1]/abs(multiplier))
-                )
+
+                if offseted_astroid[0] == 0:
+                    factorised_asteroid_positions.append((0, int(offseted_astroid[1]/abs(offseted_astroid[1]))))
+                    offseted_astroids.append((offseted_astroid, (0, int(offseted_astroid[1]/abs(offseted_astroid[1])))))
+                elif offseted_astroid[1] == 0:
+                    factorised_asteroid_positions.append((int(offseted_astroid[0]/abs(offseted_astroid[0])), 0))
+                    offseted_astroids.append((offseted_astroid, (int(offseted_astroid[0]/abs(offseted_astroid[0])), 0)))
+                else:
+                    factorised_asteroid_positions.append(
+                        (int(offseted_astroid[0]/abs(multiplier)), int(offseted_astroid[1]/abs(multiplier)))
+                    )
+                    offseted_astroids.append(
+                        (offseted_astroid,
+                         (int(offseted_astroid[0]/abs(multiplier)), int(offseted_astroid[1]/abs(multiplier)))
+                         )
+                    )
+
             current_asteroid.append(len(set(factorised_asteroid_positions)))
-        print(sorted(asteroids, key=lambda x: x[2], reverse=True))
+            current_asteroid.append(offseted_astroids)
+        selected_asteroid = sorted(asteroids, key=lambda x: x[2], reverse=True)[0]
+        print(selected_asteroid)
+        surrounding = selected_asteroid[3]
+        surrounding = [(
+            atan2(-1 * asteroid[0][1], -1 * asteroid[0][0])
+            if atan2(-1 * asteroid[0][1], -1 * asteroid[0][0]) >= 0
+            else ((2*pi) - atan2(-1 * asteroid[0][1], -1 * asteroid[0][0])),
+            sqrt((asteroid[0][0]) ** 2 + (asteroid[0][1]) ** 2),
+            asteroid) for asteroid in surrounding]
+        surrounding = sorted(surrounding, key=lambda x: (x[0], x[1]))
+        print(surrounding)
+        for asteroid in surrounding:
+            pass
 
 
 if __name__ == '__main__':
