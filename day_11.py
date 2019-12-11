@@ -1,15 +1,11 @@
-import itertools
-
-
 # Signals:
 # 0: Exited
 # 1: Waiting for input returns program and counter
 
 
-def computer(program, input_data=None, output_data=None, counter=0, debug=False):
+def computer(program, input_data=None, output_data=None, counter=0, offset=0, debug=False):
     """The computer."""
     program += [0 for _ in range(10000)]
-    offset = 0
 
     def read(mode, position):
         if mode == 0:
@@ -21,7 +17,9 @@ def computer(program, input_data=None, output_data=None, counter=0, debug=False)
 
     while counter < len(program):
         if debug:
-            print(counter, program, end=' ')
+            print('offset', offset)
+            # print(counter, program, end=' ')
+            pass
         # Explanation for the interpretation of instruction to opcode and param_mode
         # ABCDE
         #  1002
@@ -31,6 +29,8 @@ def computer(program, input_data=None, output_data=None, counter=0, debug=False)
         # B - mode of 2nd parameter,  1 == immediate mode
         # A - mode of 3rd parameter,  0 == position mode, omitted due to being a leading zero
         instruction = str(program[counter])
+        if debug:
+            print(instruction)
         opcode = int(instruction[-2:])
         param_mode = [0 for _ in range(4)]
         param_mode += [int(x) for x in list(instruction[:-2])]
@@ -56,7 +56,7 @@ def computer(program, input_data=None, output_data=None, counter=0, debug=False)
         elif opcode == 3:  # Input - 3,50 would take an input value and store it at address 50.
             if input_data is not None:
                 if len(input_data) == 0:
-                    return 1, program, counter
+                    return 1, program, counter, offset
                 if param_mode[-1] == 0:
                     program[program[counter + 1]] = input_data.pop(0)
                 elif param_mode[-1] == 1:
@@ -123,11 +123,12 @@ def computer(program, input_data=None, output_data=None, counter=0, debug=False)
             offset += read(param_mode[-1], counter + 1)
             counter += 2
         elif opcode == 99:  # Exit
-            return 0, program, counter
+            return 0, program, counter, offset
         else:
             raise RuntimeError('Unknown operation', opcode)
         if debug:
-            print(program)
+            # print(program)
+            pass
 
     if debug:
         print()
@@ -144,22 +145,18 @@ def main():
         current_direction = 0  # 0=up, 1=right, 2=down, 3=left
         counter = 0
         exit_code = 1
+        offset = 0
         while exit_code != 0:
-            input_data = []
-            if current_pos in color_map:
-                input_data.append(color_map[current_pos])
-            else:
-                input_data.append(0)
-
+            input_data = [color_map[current_pos] if current_pos in color_map else 0]
             result = []
-            exit_code, memory, counter = computer(memory, input_data=input_data, output_data=result, counter=counter)
+            exit_code, memory, counter, offset = computer(memory, input_data=input_data, output_data=result, counter=counter, offset=offset)
             if len(result) > 0:
-                color_map[(current_pos[0], current_pos[1])] = result[0]
-                drawn_tiles.append((current_pos[0], current_pos[1]))
+                color_map[current_pos] = result[0]
+                drawn_tiles.append(current_pos)
                 if result[1] == 0:
-                    current_direction = (current_direction - 1) if not current_direction == 0 else 3
+                    current_direction = (current_direction - 1) % 4
                 elif result[1] == 1:
-                    current_direction = (current_direction + 1) if not current_direction == 3 else 0
+                    current_direction = (current_direction + 1) % 4
 
                 if current_direction == 0:
                     current_pos = (current_pos[0], current_pos[1] + 1)
@@ -169,15 +166,14 @@ def main():
                     current_pos = (current_pos[0], current_pos[1] - 1)
                 elif current_direction == 3:
                     current_pos = (current_pos[0] - 1, current_pos[1])
-        # print(len(set(drawn_tiles)))
+
+        print(len(set(drawn_tiles)))
         max_x = max([x[0] for x in drawn_tiles])
         min_x = min([x[0] for x in drawn_tiles])
         max_y = max([x[1] for x in drawn_tiles])
         min_y = min([x[1] for x in drawn_tiles])
-        print(max_x, min_x, max_y, min_y)
-        for y in range(min_y, max_y + 1):
+        for y in range(max_y, min_y - 1, -1):
             print("".join(['█' if (x, y) in color_map and color_map[(x, y)] == 1 else ' ' for x in range(min_x, max_x + 1)]))
-
 
 
 if __name__ == '__main__':
