@@ -185,6 +185,20 @@ class TestIntCodeComputer(unittest.TestCase):
             "  ██  █    ███  ████ █  █ ███   ██  █  █   "
         ], drawn_result)
 
+    def test_unicode(self):
+        computer = IntCodeComputer()
+        computer.load([1006, 17, 16,
+                       4, 17,
+                       1001, 4, 1, 4,
+                       1001, 1, 1, 1,
+                       1105, 1, 0,
+                       99,
+                       72, 101, 108, 108, 111, 44, 32, 87, 111, 114, 108, 100, 33, 0])
+        computer.set_io_format(IntCodeComputer.UNICODE)
+        result = []
+        computer.run(output_data=result)
+        self.assertEqual("Hello, World!", "".join(result))
+
 
 if __name__ == '__main__':
     unittest.main()

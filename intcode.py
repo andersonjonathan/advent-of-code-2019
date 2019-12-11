@@ -1,15 +1,22 @@
+import sys
+
+
 class IntCodeComputer:
+    UNICODE = 'unicode'
+    INT = 'int'
+
     def __init__(self, program_file=None):
         self.counter = 0
         self.offset = 0
         self.program = []
         self.original_data = None
+        self.io_format = IntCodeComputer.INT
         if program_file:
             self.open(program_file)
 
     def open(self, file):
         with open(file) as input_file:
-            self.program = [int(x) for x in input_file.readline().strip().split(',')]
+            self.program = [int(x) for x in "".join([x.strip() for x in input_file.readlines()]).split(',')]
             self.original_data = (self.program.copy(), self.counter, self.offset)
 
     def load(self, program, counter=None, offset=None):
@@ -19,6 +26,9 @@ class IntCodeComputer:
         if offset is not None:
             self.offset = offset
         self.original_data = (self.program.copy(), self.counter, self.offset)
+
+    def set_io_format(self, output_format=INT):
+        self.io_format = output_format
 
     def get(self, position):
         try:
@@ -103,15 +113,27 @@ class IntCodeComputer:
                 if input_data is not None:
                     if len(input_data) == 0:
                         return 1
-                    self.write(*params[0], input_data.pop(0))
+                    if self.io_format == IntCodeComputer.INT:
+                        self.write(*params[0], int(input_data.pop(0)))
+                    elif self.io_format == IntCodeComputer.UNICODE:
+                        self.write(*params[0], ord(input_data.pop(0)))
                 else:
-                    self.write(*params[0], int(input('input: ')))
+                    if self.io_format == IntCodeComputer.INT:
+                        self.write(*params[0], int(input('input: ')))
+                    elif self.io_format == IntCodeComputer.UNICODE:
+                        self.write(*params[0], ord(input('input: ')))
                 self.counter += 2
             elif opcode == 4:  # Output - 4,50 would output the value at address 50.
                 if output_data is not None:
-                    output_data.append(self.read(*params[0]))
+                    if self.io_format == IntCodeComputer.INT:
+                        output_data.append(self.read(*params[0]))
+                    elif self.io_format == IntCodeComputer.UNICODE:
+                        output_data.append(chr(self.read(*params[0])))
                 else:
-                    print(self.read(*params[0]))
+                    if self.io_format == IntCodeComputer.INT:
+                        print(self.read(*params[0]))
+                    elif self.io_format == IntCodeComputer.UNICODE:
+                        print(chr(self.read(*params[0])), end='')
                 self.counter += 2
             elif opcode == 5:  # Jump if not 0 - 105,2,20 would change the counter to the value at address 20.
                 if self.read(*params[0]) != 0:
@@ -142,3 +164,16 @@ class IntCodeComputer:
                 return 0
             else:
                 raise RuntimeError('Unknown operation', opcode)
+
+
+def main(args):
+    """Main function that loads a program to the 'computer'."""
+    computer = IntCodeComputer(args[1])
+    computer.set_io_format(IntCodeComputer.UNICODE)
+    result = []
+    computer.run(output_data=result)
+    print("".join(result))
+
+
+if __name__ == '__main__':
+    main(sys.argv)
