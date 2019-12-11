@@ -137,10 +137,7 @@ def main():
     """Main function that loads a program to the 'computer'."""
     with open('day_11.input') as input_file:
         memory = [int(x) for x in input_file.readline().strip().split(',')]
-        #           0  1   2  3   4     5   6   7   8  9   10  11  12 13  14  15 16
-        # memory = [109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99]
-        # memory = [104,1125899906842624,99]
-        # memory = [1102,34915192,34915192,7,4,7,99,0]
+
         drawn_tiles = []
         color_map = {(0, 0): 1}
         current_pos = (0, 0)
@@ -155,14 +152,14 @@ def main():
                 input_data.append(0)
 
             result = []
-            exit_code, memmory, counter = computer(memory, input_data=input_data, output_data=result, counter=counter)
+            exit_code, memory, counter = computer(memory, input_data=input_data, output_data=result, counter=counter)
             if len(result) > 0:
-                color_map[current_pos] = result[0]
-                drawn_tiles.append(current_pos)
+                color_map[(current_pos[0], current_pos[1])] = result[0]
+                drawn_tiles.append((current_pos[0], current_pos[1]))
                 if result[1] == 0:
-                    current_direction = (current_direction - 1) % 4
+                    current_direction = (current_direction - 1) if not current_direction == 0 else 3
                 elif result[1] == 1:
-                    current_direction = (current_direction + 1) % 4
+                    current_direction = (current_direction + 1) if not current_direction == 3 else 0
 
                 if current_direction == 0:
                     current_pos = (current_pos[0], current_pos[1] + 1)
@@ -177,6 +174,7 @@ def main():
         min_x = min([x[0] for x in drawn_tiles])
         max_y = max([x[1] for x in drawn_tiles])
         min_y = min([x[1] for x in drawn_tiles])
+        print(max_x, min_x, max_y, min_y)
         for y in range(min_y, max_y + 1):
             print("".join(['█' if (x, y) in color_map and color_map[(x, y)] == 1 else ' ' for x in range(min_x, max_x + 1)]))
 
