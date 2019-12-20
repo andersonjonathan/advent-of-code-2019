@@ -98,6 +98,15 @@ class IntCodeComputer:
         return opcode, params
 
     def run(self, input_data=None, output_data=None):
+        for _ in self.run_internal(input_data=input_data, output_data=output_data):
+            pass
+
+
+    def run_with_yield(self, input_data=None):
+        for out in self.run_internal(input_data=input_data, yield_output=True):
+            yield out
+
+    def run_internal(self, input_data=None, output_data=None, yield_output=False):
         # Signals:
         # 0: Exited
         # 1: Waiting for input
@@ -124,7 +133,13 @@ class IntCodeComputer:
                         self.write(*params[0], ord(input('input: ')))
                 self.counter += 2
             elif opcode == 4:  # Output - 4,50 would output the value at address 50.
-                if output_data is not None:
+                if yield_output:
+                    if self.io_format == IntCodeComputer.INT:
+                        yield self.read(*params[0])
+                    elif self.io_format == IntCodeComputer.UNICODE:
+                        yield self.read(*params[0])
+                        # yield chr(self.read(*params[0]))
+                elif output_data is not None:
                     if self.io_format == IntCodeComputer.INT:
                         output_data.append(self.read(*params[0]))
                     elif self.io_format == IntCodeComputer.UNICODE:
